@@ -1,9 +1,9 @@
 [package]
 name = "drbg"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = """
-Crypographic random number generator CTR_DRBG defined by NIST SP 800-90A r1.
+Crypographic random number generator CTR_DRBG defined by NIST SP 800-90A R1.
 """
 license = "MIT"
 keywords = ["csprng","CTR_DRBG", "random", "rng"]
