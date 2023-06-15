@@ -8,6 +8,8 @@ Crypographic random number generator CTR_DRBG defined by NIST SP 800-90A r1.
 license = "MIT"
 keywords = ["csprng","CTR_DRBG", "random", "rng"]
 categories = ["algorithms", "cryptography"]
+repository = "https://github.com/dpottavio/drbg"
+readme = "README.md"
 
 [dependencies]
 aes = "0.8"
