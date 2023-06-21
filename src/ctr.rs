@@ -140,8 +140,9 @@ fn cipher_df(input: &[u8]) -> SeedData {
     let l: u32 = input.len() as u32;
     let n: u32 = output.len() as u32;
     // Build the S buffer which is a concatenation of the IV and input
-    // values.
-    let mut s = Vec::with_capacity(16 + input.len() + DF_BLK_LEN + 1);
+    // values. Make sure the length is DF_BLK_LEN aligned.
+    let len = ((DF_BLK_LEN + 8 + input.len() + 1) / DF_BLK_LEN) * DF_BLK_LEN;
+    let mut s = Vec::with_capacity(len);
     // padding for the IV
     s.resize(DF_BLK_LEN, 0);
     s.extend_from_slice(&l.to_be_bytes());
@@ -169,7 +170,7 @@ fn cipher_df(input: &[u8]) -> SeedData {
     let key = Key::from_slice(&tmp_buf[0..DF_KEY_LEN]);
     // X
     let cipher = Aes256Enc::new(key);
-    let mut x_blk = Block::clone_from_slice(&tmp_buf[DF_KEY_LEN..DF_BUF_LEN]);
+    let mut x_blk = Block::from_mut_slice(&mut tmp_buf[DF_KEY_LEN..DF_BUF_LEN]);
     for blk in output.chunks_mut(DF_BLK_LEN) {
         cipher.encrypt_block(&mut x_blk);
         blk.copy_from_slice(&x_blk[0..blk.len()]);
@@ -290,6 +291,15 @@ where
             }
         };
         Ok(c)
+    }
+}
+
+impl<E> Drop for CtrDrbg<E> {
+    fn drop(&mut self) {
+        self.v_blk.iter_mut().for_each(|v| *v = 0);
+        self.tmp_blk.iter_mut().for_each(|v| *v = 0);
+        self.key.iter_mut().for_each(|v| *v = 0);
+        self.tmp_buf.iter_mut().for_each(|v| *v = 0);
     }
 }
 
@@ -430,7 +440,6 @@ where
         let keylen = self.key.len();
         self.key.copy_from_slice(&self.tmp_buf[0..keylen]);
         self.v_blk.copy_from_slice(&self.tmp_buf[keylen..]);
-        self.tmp_buf.iter_mut().for_each(|v| *v = 0);
     }
 }
 
