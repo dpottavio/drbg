@@ -160,9 +160,10 @@ fn cipher_df(input: &[u8]) -> SeedData {
     // Build the initial buffer that contains the derived K and X
     // values.
     //
+    let cipher = Aes256Enc::new(key);
     let mut tmp_buf = [0u8; DF_BUF_LEN];
     for blk in tmp_buf.chunks_mut(DF_BLK_LEN) {
-        cipher_bcc(key, &s, blk);
+        cipher_bcc(&cipher, &s, Block::from_mut_slice(blk));
         // increment the IV
         inc_bytes(&mut s[0..4]);
     }
@@ -170,29 +171,25 @@ fn cipher_df(input: &[u8]) -> SeedData {
     let key = Key::from_slice(&tmp_buf[0..DF_KEY_LEN]);
     // X
     let cipher = Aes256Enc::new(key);
-    let mut x_blk = Block::from_mut_slice(&mut tmp_buf[DF_KEY_LEN..DF_BUF_LEN]);
+    let x_blk = Block::from_mut_slice(&mut tmp_buf[DF_KEY_LEN..DF_BUF_LEN]);
     for blk in output.chunks_mut(DF_BLK_LEN) {
-        cipher.encrypt_block(&mut x_blk);
+        cipher.encrypt_block(x_blk);
         blk.copy_from_slice(&x_blk[0..blk.len()]);
     }
     output
 }
 
 /// Block chaining function used by derivation function.
-fn cipher_bcc(key: &Key, input: &[u8], output: &mut [u8]) {
-    let mut chain_blk = Block::default();
+fn cipher_bcc(cipher: &Aes256Enc, input: &[u8], output: &mut Block) {
+    debug_assert_eq!(input.len() % DF_BLK_LEN, 0);
     let mut tmp_blk = Block::default();
-    let cipher = Aes256Enc::new(key);
     for blk in input.chunks(DF_BLK_LEN) {
         for i in 0..DF_BLK_LEN {
-            tmp_blk[i] = chain_blk[i] ^ blk[i];
+            tmp_blk[i] = output[i] ^ blk[i];
         }
-        chain_blk.copy_from_slice(&tmp_blk);
-        cipher.encrypt_block(&mut chain_blk);
+        output.copy_from_slice(&tmp_blk);
+        cipher.encrypt_block(output);
     }
-    debug_assert_eq!(output.len() % chain_blk.len(), 0);
-
-    output.copy_from_slice(&chain_blk);
 }
 
 impl<'a, E> CtrBuilder<'a, E>
@@ -421,14 +418,17 @@ where
             cipher.encrypt_block(&mut self.tmp_blk);
             blk.copy_from_slice(&self.tmp_blk[0..blk.len()]);
         }
-        self.update(&seed);
+        self.update_with_cipher(&cipher, &seed);
         self.reseed_ctr += 1;
         false
     }
 
     fn update(&mut self, data: &SeedData) {
+        self.update_with_cipher(&Aes256Enc::new(&self.key), data);
+    }
+
+    fn update_with_cipher(&mut self, cipher: &Aes256Enc, data: &SeedData) {
         let block_len = self.v_blk.len();
-        let cipher = Aes256Enc::new(&self.key);
         for (data_blk, tmp_blk) in zip(data.chunks(block_len), self.tmp_buf.chunks_mut(block_len)) {
             inc_bytes(&mut self.v_blk);
             tmp_blk.copy_from_slice(&self.v_blk);
