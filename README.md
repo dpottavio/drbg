@@ -24,10 +24,10 @@ use.
 ## Performance
 
 The performance of `CTR_DRBG` is dominated by AES encryption
-operations. Platforms that have AES instruction sets should see
-significant performance gains. Passing additional info to the
-`fill_bytes` function does incur additional overhead as the info is
-input to the AES derivation function.
+operations. Platforms that have AES instruction sets (e.g., AES-NI)
+should see significant performance gains. Passing additional info to
+the `fill_bytes` function does incur additional overhead as the info
+is input to the AES derivation function.
 
 ### Benchmarks
 
