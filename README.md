@@ -56,7 +56,7 @@ one-time cost per call of `fill_bytes`.
 |32 (bytes)  |167 (ns)            |
 |1 (MiB)     |1.5 (ms) ~ 655 MiB/s|
 
-#### With 8 bytes of additional info**
+#### With 8 bytes of additional info
 
 |Random Data |Latency              |
 |------------|---------------------|
