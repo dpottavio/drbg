@@ -9,7 +9,7 @@ fn ctr_drbg(buf: &mut Vec<u8>, drbg: &LocalCtrDrbg) {
 
 // Iterate with additional data.
 fn ctr_drbg_adata(buf: &mut Vec<u8>, drbg: &LocalCtrDrbg) {
-    let adata = vec![0u8; 16];
+    let adata = vec![0u8; 8];
     drbg.fill_bytes(buf, Some(&adata)).unwrap();
 }
 
