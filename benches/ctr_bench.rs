@@ -3,12 +3,12 @@ use drbg::thread::LocalCtrDrbg;
 use std::time::Duration;
 
 // Iterate without additional data.
-fn ctr_drbg(buf: &mut Vec<u8>, drbg: &LocalCtrDrbg) {
+fn ctr_drbg(buf: &mut [u8], drbg: &LocalCtrDrbg) {
     drbg.fill_bytes(buf, None).unwrap();
 }
 
 // Iterate with additional data.
-fn ctr_drbg_adata(buf: &mut Vec<u8>, drbg: &LocalCtrDrbg) {
+fn ctr_drbg_adata(buf: &mut [u8], drbg: &LocalCtrDrbg) {
     let adata = vec![0u8; 8];
     drbg.fill_bytes(buf, Some(&adata)).unwrap();
 }
