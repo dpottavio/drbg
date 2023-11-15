@@ -20,11 +20,12 @@
 // THE SOFTWARE
 //
 //! Traits and types for defining entropy sources.
+use std::fmt;
 
 /// Error type for entropy source failures.
 #[derive(Debug)]
 pub struct Error {
-    _inner: Box<dyn std::error::Error>,
+    inner: Box<dyn std::error::Error>,
 }
 
 /// Represents a source of cryptograplicly secure random data. It's
@@ -56,8 +57,20 @@ impl Error {
         E: Into<Box<dyn std::error::Error + Send + Sync>>,
     {
         Self {
-            _inner: error.into(),
+            inner: error.into(),
         }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&*self.inner)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "entropy error: {}", self.inner)
     }
 }
 
