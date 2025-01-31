@@ -29,6 +29,7 @@ use std::{
     cell::RefCell,
     rc::Rc,
     sync::atomic::{AtomicU64, Ordering},
+    thread_local,
 };
 
 /// A thread-local instance of CTR_DRBG.
@@ -37,7 +38,7 @@ use std::{
 /// pre-allocated thread-local instance. Each instance is
 /// automatically configured with the following configuration:
 ///
-/// - [`OsEntropy`](crate::entropy::OsEntropy) as entropy source.
+/// - [`OsEntropy`] as entropy source.
 ///
 /// - 32 bytes of initial entropy.
 ///
@@ -100,8 +101,7 @@ impl LocalCtrDrbg {
 #[cfg(test)]
 mod tests {
     use crate::{entropy::Error, thread::LocalCtrDrbg};
-
-    use std::thread;
+    use std::{thread, vec::Vec};
 
     #[test]
     fn single_thread() -> Result<(), Error> {

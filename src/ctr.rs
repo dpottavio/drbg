@@ -33,7 +33,8 @@ use aes::{
     },
     Aes256Enc, Block,
 };
-use std::iter::zip;
+use alloc::vec::Vec;
+use core::iter::zip;
 
 type SeedData = GenericArray<u8, U48>;
 type Key = GenericArray<u8, <Aes256Enc as KeySizeUser>::KeySize>;
@@ -449,6 +450,7 @@ mod tests {
         ctr::CtrBuilder,
         entropy::{Entropy, Error, OsEntropy},
     };
+    use alloc::{vec, vec::Vec};
     use hex;
 
     #[cfg(test)]

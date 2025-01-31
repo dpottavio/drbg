@@ -6,14 +6,21 @@ description = """
 Crypographic random number generator CTR_DRBG defined by NIST SP 800-90A R1.
 """
 license = "MIT"
-keywords = ["csprng","CTR_DRBG", "random", "rng"]
+keywords = ["csprng","CTR_DRBG", "random", "rng", "no_std"]
 categories = ["algorithms", "cryptography"]
 repository = "https://github.com/dpottavio/drbg"
 readme = "README.md"
 
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 aes = "0.8"
-getrandom = { version = "0.2", features = ["std"]}
+getrandom = { version = "0.2"}
+
+[features]
+default = ["std"]
+std = []
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }

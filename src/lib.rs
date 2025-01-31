@@ -31,19 +31,24 @@
 //! # Quick Example
 //!
 //! A simple way to obtain crypographic random random data is to use
-//! the [`LocalCtrDrbg::default()`](crate::thread::LocalCtrDrbg::default())
+//! the
+//! [`LocalCtrDrbg::default()`](crate::thread::LocalCtrDrbg::default())
 //! function. This returns a handle to a thread-local instance of
-//! [`CtrDrbg`](ctr::CtrDrbg) pre-allocated to use entropy supplied by the OS.
+//! [`CtrDrbg`](ctr::CtrDrbg) pre-allocated to use entropy supplied by
+//! the OS. The `std` feature is required for this approach.
 //!
 //! ```
+//! # #[cfg(feature = "std")]
 //! use drbg::thread::LocalCtrDrbg;
 //!
 //! # use drbg::entropy::Error;
 //! #
 //! # fn main() -> Result<(),Error> {
 //! #
+//! # #[cfg(feature = "std")]
 //! let drbg = LocalCtrDrbg::default();
 //! let mut random_data = [0u8; 32];
+//! # #[cfg(feature = "std")]
 //! drbg.fill_bytes(&mut random_data, None)?;
 //! #
 //! # Ok(())
@@ -51,10 +56,22 @@
 //! ```
 //!
 //! Otherwise an instance may be constructed by hand using the
-//! [`CtrBuilder`](ctr::CtrBuilder) class. This approach allows the
-//! caller to configure the instance with different input parameters.
+//! [`CtrBuilder`](ctr::CtrBuilder) class. This approach doesn't
+//! require the `std` feature. It also allows the caller to configure
+//! the instance with different input parameters.
 //!
 //!
+#![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+#[cfg(feature = "std")]
+extern crate std;
+
+extern crate alloc;
+
 pub mod ctr;
 pub mod entropy;
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub mod thread;
