@@ -44,18 +44,20 @@ use std::{
 ///
 /// - Reseed interval of 2^14.
 ///
-/// - 16 byte nonce from the entropy source.
-///
 /// - 4 byte unique ID as personalization information.
 ///
 /// # Example
 ///
 /// ```
+/// # use drbg::entropy::Error;
 /// use drbg::thread::LocalCtrDrbg;
 ///
+/// # fn main() -> Result<(),Error> {
 /// let drbg = LocalCtrDrbg::default();
 /// let mut random_data = [0u8; 32];
-/// drbg.fill_bytes(&mut random_data, None).unwrap();
+/// drbg.fill_bytes(&mut random_data, None)?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct LocalCtrDrbg {
     rng: Rc<RefCell<CtrDrbg<OsEntropy>>>,
