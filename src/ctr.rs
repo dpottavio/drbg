@@ -334,9 +334,7 @@ where
         }
 
         for blk in bytes.chunks_mut(MAX_BYTE_REQUEST) {
-            while self.generate(blk, additional) {
-                self.reseed(additional)?;
-            }
+            self.generate(blk, additional)?;
         }
         Ok(())
     }
@@ -369,7 +367,7 @@ where
         seed_input.extend_from_slice(add_bytes);
         let seed = cipher_df(&seed_input);
 
-        self.update(&seed);
+        self.init_seed(&seed);
         self.reseed_ctr = 0;
         Ok(())
     }
@@ -393,13 +391,16 @@ where
             reseed_itr,
             entropy,
         };
-        c.update(&seed);
+        c.init_seed(&seed);
         Ok(c)
     }
 
-    fn generate(&mut self, bytes: &mut [u8], additional: Option<&[u8]>) -> bool {
+    /// Generate new random data and copy it into 'bytes'. If the
+    /// reseed interval has been reached, this function will call
+    /// reseed().
+    fn generate(&mut self, bytes: &mut [u8], additional: Option<&[u8]>) -> Result<(), Error> {
         if self.reseed_ctr == self.reseed_itr {
-            return true;
+            self.reseed(additional)?;
         }
         assert!(bytes.len() <= MAX_BYTE_REQUEST);
 
@@ -408,7 +409,7 @@ where
             0 => SeedData::default(),
             _ => {
                 let seed = cipher_df(add_bytes);
-                self.update(&seed);
+                self.init_seed(&seed);
                 seed
             }
         };
@@ -419,16 +420,18 @@ where
             cipher.encrypt_block(&mut self.tmp_blk);
             blk.copy_from_slice(&self.tmp_blk[0..blk.len()]);
         }
-        self.update_with_cipher(&cipher, &seed);
+        self.update(&cipher, &seed);
         self.reseed_ctr += 1;
-        false
+        Ok(())
     }
 
-    fn update(&mut self, data: &SeedData) {
-        self.update_with_cipher(&Aes256Enc::new(&self.key), data);
+    /// Initialize a `SeedData` instance.
+    fn init_seed(&mut self, data: &SeedData) {
+        self.update(&Aes256Enc::new(&self.key), data);
     }
 
-    fn update_with_cipher(&mut self, cipher: &Aes256Enc, data: &SeedData) {
+    /// Update internal state to provide backtracking resistance.
+    fn update(&mut self, cipher: &Aes256Enc, data: &SeedData) {
         let block_len = self.v_blk.len();
         for (data_blk, tmp_blk) in zip(data.chunks(block_len), self.tmp_buf.chunks_mut(block_len)) {
             inc_bytes(&mut self.v_blk);
@@ -505,8 +508,8 @@ mod tests {
 
         drbg.reseed(Some(&add_0))?;
         let mut bytes = [0u8; 64];
-        drbg.generate(&mut bytes, Some(&add_1));
-        drbg.generate(&mut bytes, Some(&add_2));
+        drbg.generate(&mut bytes, Some(&add_1)).unwrap();
+        drbg.generate(&mut bytes, Some(&add_2)).unwrap();
         assert_eq!(output, bytes);
         Ok(())
     }
