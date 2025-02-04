@@ -44,7 +44,7 @@ use std::{
 ///
 /// - Reseed interval of 2^14.
 ///
-/// - 4 byte unique ID as personalization information.
+/// - 8 byte unique ID as personalization information.
 ///
 /// # Example
 ///
