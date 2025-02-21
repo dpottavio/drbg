@@ -142,7 +142,7 @@ fn cipher_df(input: &[u8]) -> SeedData {
     let n: u32 = output.len() as u32;
     // Build the S buffer which is a concatenation of the IV and input
     // values. Make sure the length is DF_BLK_LEN aligned.
-    let len = ((DF_BLK_LEN + 8 + input.len() + 1) / DF_BLK_LEN) * DF_BLK_LEN;
+    let len = (8 + input.len() + 1).div_ceil(DF_BLK_LEN) * DF_BLK_LEN;
     let mut s = Vec::with_capacity(len);
     // padding for the IV
     s.resize(DF_BLK_LEN, 0);
