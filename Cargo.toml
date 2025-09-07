@@ -17,10 +17,12 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 aes = "0.8"
 getrandom = { version = "0.2"}
+rand_core = { version = "0.9", default-features = false, optional = true}
 zeroize = {version = "1.8", default-features = false, optional = true}
 
 [features]
 default = ["std", "zeroize"]
+rand_core = ["dep:rand_core"]
 std = []
 zeroize = ["dep:zeroize"]
 

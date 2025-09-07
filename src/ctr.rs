@@ -39,6 +39,9 @@ use core::iter::zip;
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+#[cfg(feature = "rand_core")]
+use rand_core::{TryCryptoRng, TryRngCore};
+
 type SeedData = GenericArray<u8, U48>;
 type Key = GenericArray<u8, <Aes256Enc as KeySizeUser>::KeySize>;
 
