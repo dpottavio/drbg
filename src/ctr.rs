@@ -36,6 +36,9 @@ use aes::{
 use alloc::vec::Vec;
 use core::iter::zip;
 
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
+
 type SeedData = GenericArray<u8, U48>;
 type Key = GenericArray<u8, <Aes256Enc as KeySizeUser>::KeySize>;
 
@@ -292,15 +295,6 @@ where
     }
 }
 
-impl<E> Drop for CtrDrbg<E> {
-    fn drop(&mut self) {
-        self.v_blk.iter_mut().for_each(|v| *v = 0);
-        self.tmp_blk.iter_mut().for_each(|v| *v = 0);
-        self.key.iter_mut().for_each(|v| *v = 0);
-        self.tmp_buf.iter_mut().for_each(|v| *v = 0);
-    }
-}
-
 impl<E> CtrDrbg<E>
 where
     E: Entropy,
@@ -444,6 +438,46 @@ where
         let keylen = self.key.len();
         self.key.copy_from_slice(&self.tmp_buf[0..keylen]);
         self.v_blk.copy_from_slice(&self.tmp_buf[keylen..]);
+    }
+}
+
+#[cfg(feature = "rand_core")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
+impl<E> TryCryptoRng for CtrDrbg<E> where CtrDrbg<E>: TryRngCore {}
+
+#[cfg(feature = "rand_core")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
+impl<E> TryRngCore for CtrDrbg<E>
+where
+    E: Entropy,
+{
+    type Error = Error;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        let mut bytes = [0u8; 4];
+        self.fill_bytes(&mut bytes, None)?;
+        Ok(u32::from_be_bytes(bytes))
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        let mut bytes = [0u8; 8];
+        self.fill_bytes(&mut bytes, None)?;
+        Ok(u64::from_be_bytes(bytes))
+    }
+
+    fn try_fill_bytes(&mut self, bytes: &mut [u8]) -> Result<(), Self::Error> {
+        self.fill_bytes(bytes, None)?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<E> Drop for CtrDrbg<E> {
+    fn drop(&mut self) {
+        self.v_blk.zeroize();
+        self.tmp_blk.zeroize();
+        self.key.zeroize();
+        self.tmp_buf.zeroize();
     }
 }
 
