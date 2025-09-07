@@ -475,8 +475,11 @@ where
 }
 
 #[cfg(feature = "zeroize")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
 impl<E> Drop for CtrDrbg<E> {
+    /// Clears the internal state of the RNG. This requires the
+    /// `zeroize` feature to ensure this operation is not optimized
+    /// away by the compiler.
     fn drop(&mut self) {
         self.v_blk.zeroize();
         self.tmp_blk.zeroize();
