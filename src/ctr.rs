@@ -475,6 +475,7 @@ where
 }
 
 #[cfg(feature = "zeroize")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
 impl<E> Drop for CtrDrbg<E> {
     fn drop(&mut self) {
         self.v_blk.zeroize();
