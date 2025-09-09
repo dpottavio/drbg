@@ -12,6 +12,7 @@ repository = "https://github.com/dpottavio/drbg"
 readme = "README.md"
 
 [package.metadata.docs.rs]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
