@@ -32,6 +32,9 @@ use std::{
     thread_local,
 };
 
+#[cfg(feature = "rand_core")]
+use rand_core::{TryCryptoRng, TryRngCore};
+
 /// A thread-local instance of CTR_DRBG.
 ///
 /// A call to [`LocalCtrDrbg::default()`] returns a handle to a
@@ -97,6 +100,28 @@ impl LocalCtrDrbg {
     /// See [`reseed`](crate::ctr::CtrDrbg::reseed) for details.
     pub fn reseed(&self, additional: Option<&[u8]>) -> Result<(), Error> {
         self.rng.borrow_mut().reseed(additional)
+    }
+}
+
+#[cfg(feature = "rand_core")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
+impl TryCryptoRng for LocalCtrDrbg where LocalCtrDrbg: TryRngCore {}
+
+#[cfg(feature = "rand_core")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
+impl TryRngCore for LocalCtrDrbg {
+    type Error = Error;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        self.rng.borrow_mut().try_next_u32()
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        self.rng.borrow_mut().try_next_u64()
+    }
+
+    fn try_fill_bytes(&mut self, bytes: &mut [u8]) -> Result<(), Self::Error> {
+        self.rng.borrow_mut().try_fill_bytes(bytes)
     }
 }
 
