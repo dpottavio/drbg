@@ -130,6 +130,7 @@ pub struct CtrBuilder<'a, E> {
 }
 
 /// Increment a slice of bytes by 1 in big-endian order.
+#[inline]
 fn inc_bytes(block: &mut [u8]) {
     for bit in block.iter_mut().rev() {
         if *bit == 0xff {
@@ -189,12 +190,10 @@ fn cipher_df(input: &[u8]) -> SeedData {
 /// Block chaining function used by derivation function.
 fn cipher_bcc(cipher: &Aes256Enc, input: &[u8], output: &mut Block) {
     debug_assert_eq!(input.len() % DF_BLK_LEN, 0);
-    let mut tmp_blk = Block::default();
     for blk in input.chunks(DF_BLK_LEN) {
-        for i in 0..DF_BLK_LEN {
-            tmp_blk[i] = output[i] ^ blk[i];
+        for (i, j) in output.iter_mut().zip(blk.iter()) {
+            *i ^= *j;
         }
-        output.copy_from_slice(&tmp_blk);
         cipher.encrypt_block(output);
     }
 }
@@ -413,8 +412,7 @@ where
         let cipher = Aes256Enc::new(&self.key);
         for blk in bytes.chunks_mut(self.tmp_blk.len()) {
             inc_bytes(&mut self.v_blk);
-            self.tmp_blk.copy_from_slice(&self.v_blk);
-            cipher.encrypt_block(&mut self.tmp_blk);
+            cipher.encrypt_block_b2b(&self.v_blk, &mut self.tmp_blk);
             blk.copy_from_slice(&self.tmp_blk[0..blk.len()]);
         }
         self.update(&cipher, &seed);
@@ -429,18 +427,30 @@ where
 
     /// Update internal state to provide backtracking resistance.
     fn update(&mut self, cipher: &Aes256Enc, data: &SeedData) {
-        let block_len = self.v_blk.len();
-        for (data_blk, tmp_blk) in zip(data.chunks(block_len), self.tmp_buf.chunks_mut(block_len)) {
-            inc_bytes(&mut self.v_blk);
-            tmp_blk.copy_from_slice(&self.v_blk);
-            cipher.encrypt_block(GenericArray::from_mut_slice(tmp_blk));
-            for (i, j) in zip(tmp_blk, data_blk) {
-                *i ^= *j
-            }
+        // Unroll the counter block increments: V+1, V+2, V+3
+        let mut b0 = self.v_blk;
+        inc_bytes(&mut b0);
+        let mut b1 = b0;
+        inc_bytes(&mut b1);
+        let mut b2 = b1;
+        inc_bytes(&mut b2);
+
+        let mut blocks = [b0, b1, b2];
+
+        cipher.encrypt_blocks(&mut blocks);
+
+        // new key
+        self.key[0..16].copy_from_slice(&blocks[0]);
+        self.key[16..32].copy_from_slice(&blocks[1]);
+        for (i, j) in zip(&mut self.key, &data[0..32]) {
+            *i ^= *j
         }
-        let keylen = self.key.len();
-        self.key.copy_from_slice(&self.tmp_buf[0..keylen]);
-        self.v_blk.copy_from_slice(&self.tmp_buf[keylen..]);
+
+        // new V block
+        self.v_blk.copy_from_slice(&blocks[2]);
+        for (i, j) in zip(&mut self.v_blk, &data[32..48]) {
+            *i ^= *j
+        }
     }
 }
 
