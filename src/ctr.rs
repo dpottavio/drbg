@@ -69,7 +69,6 @@ pub struct CtrDrbg<E> {
     v_blk: Block,
     tmp_blk: Block,
     key: Key,
-    tmp_buf: SeedData,
     reseed_itr: u64,
     reseed_ctr: u64,
     entropy: E,
@@ -363,7 +362,6 @@ where
             v_blk: Block::default(),
             key: Key::default(),
             reseed_ctr: 0,
-            tmp_buf: SeedData::default(),
             tmp_blk: Block::default(),
             reseed_itr,
             entropy,
@@ -475,7 +473,6 @@ impl<E> Drop for CtrDrbg<E> {
         self.v_blk.zeroize();
         self.tmp_blk.zeroize();
         self.key.zeroize();
-        self.tmp_buf.zeroize();
     }
 }
 
