@@ -31,8 +31,8 @@ is input to the AES derivation function.
 
 ### Benchmarks
 
-The following benchmark measurements where taken on a Intel i5-8265U
-CPU @ 1.60GHz with AES-NI enabled.
+The following benchmark measurements where taken on an Intel Ultra 5
+225H using AES-NI.
 
 The measurements below are the average latency for reading random
 data. The sizes 16 and 32 bytes are used because they are typical for
@@ -50,19 +50,19 @@ one-time cost per call of `fill_bytes`.
 
 #### Without additional info
 
-|Random Data |Latency             |
-|------------|--------------------|
-|16 (bytes)  |144 (ns)            |
-|32 (bytes)  |167 (ns)            |
-|1 (MiB)     |1.5 (ms) ~ 655 MiB/s|
+|Random Data |Latency           |
+|------------|------------------|
+|16 (bytes)  |118 (ns)          |
+|32 (bytes)  |133 (ns)          |
+|1  (MiB)    |996 (µs) ~1 GiB/s |
 
 #### With 8 bytes of additional info
 
-|Random Data |Latency              |
-|------------|---------------------|
-|16 (bytes)  |702 (ns)             |
-|32 (bytes)  |722 (ns)             |
-|1 (MiB)     |1.51 (ms) ~ 652 MiB/s|
+|Random Data |Latency           |
+|------------|------------------|
+|16 (bytes)  |483 (ns)          |
+|32 (bytes)  |500 (ns)          |
+|1  (MiB)    |  1 (ms) ~1 GiB/s |
 
 Overall the performance of this implementation of `CTR_DRBG` should be
 sufficient for most use-cases. Although passing additional info has a
