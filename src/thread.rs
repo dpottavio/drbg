@@ -14,7 +14,7 @@ use std::{
 };
 
 #[cfg(feature = "rand_core")]
-use rand_core::{TryCryptoRng, TryRngCore};
+use rand_core::{TryCryptoRng, TryRng};
 
 /// A thread-local instance of CTR_DRBG.
 ///
@@ -86,11 +86,11 @@ impl LocalCtrDrbg {
 
 #[cfg(feature = "rand_core")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
-impl TryCryptoRng for LocalCtrDrbg where LocalCtrDrbg: TryRngCore {}
+impl TryCryptoRng for LocalCtrDrbg where LocalCtrDrbg: TryRng {}
 
 #[cfg(feature = "rand_core")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
-impl TryRngCore for LocalCtrDrbg {
+impl TryRng for LocalCtrDrbg {
     type Error = Error;
 
     fn try_next_u32(&mut self) -> Result<u32, Self::Error> {

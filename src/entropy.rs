@@ -34,7 +34,7 @@ impl Error {
     /// use drbg::entropy::Error;
     ///
     /// fn fill_bytes(bytes: &mut [u8]) -> Result<(), Error> {
-    ///    getrandom::getrandom(bytes).map_err(Error::new)
+    ///    getrandom::fill(bytes).map_err(Error::new)
     /// }
     /// ```
     pub fn new<E>(error: E) -> Self
@@ -83,12 +83,12 @@ impl OsEntropy {
 
 impl Entropy for OsEntropy {
     /// Fill `bytes` with random data from the operating system using
-    /// [`getrandom`](getrandom::getrandom).
+    /// [`getrandom`](getrandom::fill).
     ///
     /// # Error
     ///
     /// Returns any error from `getrandom`.
     fn fill_bytes(&mut self, bytes: &mut [u8]) -> Result<(), Error> {
-        getrandom::getrandom(bytes).map_err(Error::new)
+        getrandom::fill(bytes).map_err(Error::new)
     }
 }

@@ -9,9 +9,7 @@
 use crate::entropy::{Entropy, Error};
 
 use aes::{
-    cipher::{
-        generic_array::GenericArray, typenum::consts::U48, BlockEncrypt, KeyInit, KeySizeUser,
-    },
+    cipher::{array::Array, consts::U48, BlockCipherEncrypt, Key as CipherKey, KeyInit},
     Aes256Enc, Block,
 };
 use alloc::vec::Vec;
@@ -21,10 +19,10 @@ use core::iter::zip;
 use zeroize::Zeroize;
 
 #[cfg(feature = "rand_core")]
-use rand_core::{TryCryptoRng, TryRngCore};
+use rand_core::{TryCryptoRng, TryRng};
 
-type SeedData = GenericArray<u8, U48>;
-type Key = GenericArray<u8, <Aes256Enc as KeySizeUser>::KeySize>;
+type SeedData = Array<u8, U48>;
+type Key = CipherKey<Aes256Enc>;
 
 const MAX_BYTE_REQUEST: usize = 1 << 16;
 const MAX_INPUT_LEN: usize = 1 << 32;
@@ -143,23 +141,24 @@ fn cipher_df(input: &[u8]) -> SeedData {
     }
     let k = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\
               \x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f";
-    let key = Key::from_slice(k);
     //
     // Build the initial buffer that contains the derived K and X
     // values.
     //
-    let cipher = Aes256Enc::new(key);
+    let cipher = Aes256Enc::new_from_slice(k).expect("DF key has AES-256 key length");
     let mut tmp_buf = [0u8; DF_BUF_LEN];
     for blk in tmp_buf.chunks_mut(DF_BLK_LEN) {
-        cipher_bcc(&cipher, &s, Block::from_mut_slice(blk));
+        let block = <&mut Block>::try_from(blk).expect("DF buffer chunks are AES block length");
+        cipher_bcc(&cipher, &s, block);
         // increment the IV
         inc_bytes(&mut s[0..4]);
     }
     // K
-    let key = Key::from_slice(&tmp_buf[0..DF_KEY_LEN]);
+    let cipher =
+        Aes256Enc::new_from_slice(&tmp_buf[0..DF_KEY_LEN]).expect("DF output contains AES-256 key");
     // X
-    let cipher = Aes256Enc::new(key);
-    let x_blk = Block::from_mut_slice(&mut tmp_buf[DF_KEY_LEN..DF_BUF_LEN]);
+    let x_blk = <&mut Block>::try_from(&mut tmp_buf[DF_KEY_LEN..DF_BUF_LEN])
+        .expect("DF output contains AES block");
     for blk in output.chunks_mut(DF_BLK_LEN) {
         cipher.encrypt_block(x_blk);
         blk.copy_from_slice(&x_blk[0..blk.len()]);
@@ -435,11 +434,11 @@ where
 
 #[cfg(feature = "rand_core")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
-impl<E> TryCryptoRng for CtrDrbg<E> where CtrDrbg<E>: TryRngCore {}
+impl<E> TryCryptoRng for CtrDrbg<E> where CtrDrbg<E>: TryRng {}
 
 #[cfg(feature = "rand_core")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand_core")))]
-impl<E> TryRngCore for CtrDrbg<E>
+impl<E> TryRng for CtrDrbg<E>
 where
     E: Entropy,
 {

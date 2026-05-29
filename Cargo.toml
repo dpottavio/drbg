@@ -16,9 +16,9 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-aes = "0.8"
-getrandom = { version = "0.2"}
-rand_core = { version = "0.9", default-features = false, optional = true}
+aes = "0.9"
+getrandom = { version = "0.4"}
+rand_core = { version = "0.10", default-features = false, optional = true}
 zeroize = {version = "1.8", default-features = false, optional = true}
 
 [features]
@@ -28,7 +28,7 @@ std = []
 zeroize = ["dep:zeroize"]
 
 [dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 hex = "0.4"
 
 [[bench]]
